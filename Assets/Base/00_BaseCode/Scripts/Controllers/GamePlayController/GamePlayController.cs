@@ -19,8 +19,8 @@ public class GamePlayController : Singleton<GamePlayController>
     public StateGame stateGame;
     public PlayerContain playerContain;
     public GameScene gameScene;
- 
- 
+    public D_TileController tileController;
+    public D_LevelDesign levelDesign;
  
     
     protected override void OnAwake()

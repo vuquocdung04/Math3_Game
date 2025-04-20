@@ -8,7 +8,7 @@ public class PlayerContain : MonoBehaviour
     public LevelData levelData; 
     public void Init()
     { 
-      levelData.Init();
+      //levelData.Init();
 
     }
 
