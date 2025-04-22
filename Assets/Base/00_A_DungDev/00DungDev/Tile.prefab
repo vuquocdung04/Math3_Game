@@ -27,8 +27,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.43, y: 0.43, z: 0.43}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 9136431636096585670}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -131,10 +131,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 0
-  tileRight: {fileID: 0}
-  tileLeft: {fileID: 0}
-  tileUp: {fileID: 0}
-  tileDown: {fileID: 0}
+  tileNeighborRight: {fileID: 0}
+  tileNeighborLeft: {fileID: 0}
+  tileNeighborUp: {fileID: 0}
+  tileNeighborDown: {fileID: 0}
   spriteRenderer: {fileID: 4360630001633230476}
   posX: 0
   posY: 0

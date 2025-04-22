@@ -11,10 +11,10 @@ public class D_Tile : MonoBehaviour
 {
     public D_TipeType type;
 
-    public D_Tile tileRight;
-    public D_Tile tileLeft;
-    public D_Tile tileUp;
-    public D_Tile tileDown;
+    public D_Tile tileNeighborRight;
+    public D_Tile tileNeighborLeft;
+    public D_Tile tileNeighborUp;
+    public D_Tile tileNeighborDown;
 
     [SerializeField] SpriteRenderer spriteRenderer;
     public SpriteRenderer SpriteRenderer => spriteRenderer;
@@ -29,10 +29,10 @@ public class D_Tile : MonoBehaviour
     public void SetTileNeighbor()
     {
         var tileCtrl = GamePlayController.Instance.tileController;
-        this.tileRight = tileCtrl.GetTile(posX+1,posY);
-        this.tileLeft = tileCtrl.GetTile(posX-1,posY);
-        this.tileUp = tileCtrl.GetTile(posX,posY+1);
-        this.tileDown = tileCtrl.GetTile(posX,posY-1);
+        this.tileNeighborRight = tileCtrl.GetTile(posX+1,posY);
+        this.tileNeighborLeft = tileCtrl.GetTile(posX-1,posY);
+        this.tileNeighborUp = tileCtrl.GetTile(posX,posY+1);
+        this.tileNeighborDown = tileCtrl.GetTile(posX,posY-1);
     }
 
 

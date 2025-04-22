@@ -6,9 +6,9 @@ public class D_LevelDesign : MonoBehaviour
 {
     public int row, col;
     public int tileAmount;
-    [SerializeField] D_Tile tilePrefab;
+    public D_Tile tilePrefab;
     [Space(10)]
-    public List<Color> lsTileColors = new List<Color>(5);
+    public List<Sprite> lsTileSprite = new();
     public List<D_Tile> lsTiles = new();
     [Space(10)]
     [Header("Matrix")]
@@ -20,9 +20,8 @@ public class D_LevelDesign : MonoBehaviour
         this.GenerateMatrix();
     }
 
-    [Button("Sinh Matrix",ButtonSizes.Large)]
 
-    void GenerateMatrix()
+    public void GenerateMatrix()
     {
         matrix = new int[row,col];
 
@@ -40,29 +39,34 @@ public class D_LevelDesign : MonoBehaviour
                 {
                     case 0:
                         tile.type = D_TipeType.type0;
-                        tile.SpriteRenderer.color = lsTileColors[rand];
+                        tile.SpriteRenderer.sprite = lsTileSprite[rand];
                         break;
                     case 1:
                         tile.type = D_TipeType.type1;
-                        tile.SpriteRenderer.color = lsTileColors[rand];
+                        tile.SpriteRenderer.sprite = lsTileSprite[rand];
                         break;
                     case 2:
                         tile.type = D_TipeType.type2;
-                        tile.SpriteRenderer.color = lsTileColors[rand];
+                        tile.SpriteRenderer.sprite = lsTileSprite[rand];
                         break;
                     case 3:
                         tile.type = D_TipeType.type3;
-                        tile.SpriteRenderer.color = lsTileColors[rand];
+                        tile.SpriteRenderer.sprite = lsTileSprite[rand];
                         break;
                     case 4:
                         tile.type = D_TipeType.type4;
-                        tile.SpriteRenderer.color = lsTileColors[rand];
+                        tile.SpriteRenderer.sprite = lsTileSprite[rand];
                         break;
                     case 5:
                         tile.type = D_TipeType.type5;
-                        tile.SpriteRenderer.color = lsTileColors[rand];
+                        tile.SpriteRenderer.sprite = lsTileSprite[rand];
+                        break;
+                    default:
+                        tile.type = D_TipeType.type6;
+                        tile.SpriteRenderer.sprite = lsTileSprite[rand];
                         break;
                 }
+                tile.name = "Tile" + tile.type.ToString();
             }
         }
 
@@ -71,8 +75,7 @@ public class D_LevelDesign : MonoBehaviour
         this.CheckMatch();
     }
 
-    [Button("Delete Matrix", ButtonSizes.Large)]
-    void ClearMatrix()
+    public void ClearMatrix()
     {
         for(int i = 0; i < row; i++)
         {
@@ -84,7 +87,7 @@ public class D_LevelDesign : MonoBehaviour
 
         foreach(var child in this.lsTiles)
         {
-            DestroyImmediate(child.gameObject);
+            Destroy(child.gameObject);
         }
         lsTiles.Clear();
     }

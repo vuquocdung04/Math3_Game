@@ -510,12 +510,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fea4f93c22192041ac28d8f2e51593d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tilePrefab: {fileID: 1501558925396776102, guid: d6b16b52bc0f4c043a938988cd86ff00, type: 3}
   tile1: {fileID: 0}
   tile2: {fileID: 0}
   selectTile: {fileID: 0}
-  isTest: 0
-  lsTiles: []
+  horizontal: []
+  vertical: []
 --- !u!1 &928942970
 GameObject:
   m_ObjectHideFlags: 0
@@ -983,15 +982,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   row: 7
   col: 7
-  tileAmount: 6
+  tileAmount: 7
   tilePrefab: {fileID: 1501558925396776102, guid: d6b16b52bc0f4c043a938988cd86ff00, type: 3}
-  lsTileColors:
-  - {r: 0, g: 1, b: 0.36696172, a: 1}
-  - {r: 0.026875138, g: 1, b: 0, a: 1}
-  - {r: 0, g: 1, b: 0.88851166, a: 1}
-  - {r: 1, g: 0.5183668, b: 0, a: 1}
-  - {r: 1, g: 0, b: 0.80578804, a: 1}
-  - {r: 0.23644304, g: 0, b: 1, a: 1}
+  lsTileSprite:
+  - {fileID: 21300000, guid: a72c14f0cf017874dbe999176790139d, type: 3}
+  - {fileID: 21300000, guid: d4f4b0573eef0d640a4ac306e86b31d1, type: 3}
+  - {fileID: 21300000, guid: 8ef723f232b013e45a1eaaf51f35ad5a, type: 3}
+  - {fileID: 21300000, guid: 993b8d4dd399851499d00662cd8a5886, type: 3}
+  - {fileID: 21300000, guid: 45b9f26ef9ef45e4391104731de2081c, type: 3}
+  - {fileID: 21300000, guid: 2cc0eb03e1e023a42806392b488a1383, type: 3}
+  - {fileID: 21300000, guid: a8d3e11dd5ec0fb4c949ca092525a437, type: 3}
   lsTiles: []
 --- !u!1 &1395710097
 GameObject:
