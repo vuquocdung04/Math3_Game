@@ -10,7 +10,7 @@ public enum D_TipeType
 public class D_Tile : MonoBehaviour
 {
     public D_TipeType type;
-
+    public int idTile;
     public D_Tile tileNeighborRight;
     public D_Tile tileNeighborLeft;
     public D_Tile tileNeighborUp;
@@ -34,6 +34,12 @@ public class D_Tile : MonoBehaviour
         this.tileNeighborUp = tileCtrl.GetTile(posX,posY+1);
         this.tileNeighborDown = tileCtrl.GetTile(posX,posY-1);
     }
-
+    public void ClearNeighborRef()
+    {
+        if (tileNeighborRight != null) tileNeighborRight.tileNeighborLeft = null;
+        if (tileNeighborLeft != null) tileNeighborLeft.tileNeighborRight = null;
+        if (tileNeighborUp != null) tileNeighborUp.tileNeighborDown = null;
+        if (tileNeighborDown != null) tileNeighborDown.tileNeighborUp = null;
+    }
 
 }

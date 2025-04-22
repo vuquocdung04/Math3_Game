@@ -93,7 +93,6 @@ public class D_TileController : MonoBehaviour
         tile2Param.transform.DOMove(pos1, 0.2f).OnComplete(() => {
             tile1Param.UpdateIndex(index2);
             tile2Param.UpdateIndex(index1);
-
             callback?.Invoke();
         }).Play();
     }
@@ -103,7 +102,10 @@ public class D_TileController : MonoBehaviour
         if (posX < 0 || posY < 0) return null;
         if (posX >= GamePlayController.Instance.levelDesign.row || posY >= GamePlayController.Instance.levelDesign.col) return null;
 
-        foreach (var tile in GamePlayController.Instance.levelDesign.lsTiles) if (tile.posX == posX && tile.posY == posY) return tile;
+        foreach (var tile in GamePlayController.Instance.levelDesign.lsTiles)
+        {
+            if (tile.posX == posX && tile.posY == posY) return tile;
+        }
 
         return null;
     }
@@ -125,13 +127,15 @@ public class D_TileController : MonoBehaviour
             {
                 foreach (var tile in group)
                 {
+                    tile.ClearNeighborRef();
+                    tile.SetTileNeighbor();
                     tile.transform.DOScale(0f, 0.5f)
                         .SetEase(Ease.OutQuad)
                         .OnComplete(() => Destroy(tile.gameObject));
-                    Debug.LogError(tile.name);
                 }
             }
         }
+
     }
 
 

@@ -74,7 +74,6 @@ public class D_LevelDesign : MonoBehaviour
 
         this.CheckMatch();
     }
-
     public void ClearMatrix()
     {
         for(int i = 0; i < row; i++)
