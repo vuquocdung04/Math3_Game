@@ -228,13 +228,31 @@ public class D_TileController : MonoBehaviour
         // Đợi cho các ô hiện có hoàn thành việc rơi
         yield return new WaitForSeconds(0.3f);
 
+        // Thiết lập các ô láng giềng cho tất cả các ô hiện có
+        foreach (var tile in GamePlayController.Instance.levelDesign.lsTiles)
+        {
+            tile.SetTileNeighbor();
+        }
+
+        // Kiểm tra xem còn nước đi tiềm năng không
+        bool hasPotentialMoves = HasPotentialMoves();
+
         // Tạo các ô mới ở trên cùng của mỗi cột cần ô mới
         foreach (var columnData in columnsNeedingNewTiles)
         {
             int x = columnData.Key;
             int emptySlots = columnData.Value;
 
-            SpawnNewTilesInColumn(x, emptySlots);
+            if (!hasPotentialMoves)
+            {
+                // Nếu không còn nước đi tiềm năng, sử dụng logic thông minh
+                SpawnSmartTilesInColumn(x, emptySlots);
+            }
+            else
+            {
+                // Nếu còn nước đi tiềm năng, sử dụng logic thông thường
+                SpawnNewTilesInColumn(x, emptySlots);
+            }
         }
 
         // Đợi cho các ô mới hoàn thành việc rơi
@@ -310,6 +328,195 @@ public class D_TileController : MonoBehaviour
         // Sau này chúng ta sẽ thêm xử lý tạo ô mới ở đây
     }
 
+    // Kiểm tra xem còn nước đi tiềm năng không
+    bool HasPotentialMoves()
+    {
+        var levelDesign = GamePlayController.Instance.levelDesign;
+        List<D_Tile> tiles = levelDesign.lsTiles;
+
+        // Kiểm tra từng ô
+        foreach (var tile in tiles)
+        {
+            // Kiểm tra hoán đổi với ô bên phải
+            if (tile.tileNeighborRight != null)
+            {
+                // Hoán đổi tạm thời
+                D_TipeType tempType = tile.type;
+                tile.type = tile.tileNeighborRight.type;
+                tile.tileNeighborRight.type = tempType;
+
+                // Kiểm tra xem có tạo match-3 không
+                bool hasMatch = CheckPotentialMatch(tile) || CheckPotentialMatch(tile.tileNeighborRight);
+
+                // Hoàn trả lại loại ban đầu
+                tile.tileNeighborRight.type = tile.type;
+                tile.type = tempType;
+
+                if (hasMatch)
+                    return true;
+            }
+
+            // Kiểm tra hoán đổi với ô bên trên
+            if (tile.tileNeighborUp != null)
+            {
+                // Hoán đổi tạm thời
+                D_TipeType tempType = tile.type;
+                tile.type = tile.tileNeighborUp.type;
+                tile.tileNeighborUp.type = tempType;
+
+                // Kiểm tra xem có tạo match-3 không
+                bool hasMatch = CheckPotentialMatch(tile) || CheckPotentialMatch(tile.tileNeighborUp);
+
+                // Hoàn trả lại loại ban đầu
+                tile.tileNeighborUp.type = tile.type;
+                tile.type = tempType;
+
+                if (hasMatch)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Kiểm tra xem một ô có tạo thành match-3 không
+    bool CheckPotentialMatch(D_Tile tile)
+    {
+        // Đếm số ô cùng loại theo chiều ngang (trái + phải)
+        int horizontalCount = 1; // Bao gồm ô hiện tại
+
+        // Kiểm tra sang phải
+        D_Tile rightTile = tile.tileNeighborRight;
+        while (rightTile != null && rightTile.type == tile.type)
+        {
+            horizontalCount++;
+            rightTile = rightTile.tileNeighborRight;
+        }
+
+        // Kiểm tra sang trái
+        D_Tile leftTile = tile.tileNeighborLeft;
+        while (leftTile != null && leftTile.type == tile.type)
+        {
+            horizontalCount++;
+            leftTile = leftTile.tileNeighborLeft;
+        }
+
+        // Đếm số ô cùng loại theo chiều dọc (trên + dưới)
+        int verticalCount = 1; // Bao gồm ô hiện tại
+
+        // Kiểm tra lên trên
+        D_Tile upTile = tile.tileNeighborUp;
+        while (upTile != null && upTile.type == tile.type)
+        {
+            verticalCount++;
+            upTile = upTile.tileNeighborUp;
+        }
+
+        // Kiểm tra xuống dưới
+        D_Tile downTile = tile.tileNeighborDown;
+        while (downTile != null && downTile.type == tile.type)
+        {
+            verticalCount++;
+            downTile = downTile.tileNeighborDown;
+        }
+
+        // Nếu có ít nhất 3 ô cùng loại theo chiều ngang hoặc dọc
+        return horizontalCount >= 3 || verticalCount >= 3;
+    }
+
+    // Tạo ô mới thông minh để đảm bảo có ít nhất một nước đi tiềm năng
+    void SpawnSmartTilesInColumn(int x, int emptySlots)
+    {
+        var levelDesign = GamePlayController.Instance.levelDesign;
+        List<D_Tile> newTiles = new List<D_Tile>();
+
+        // Tạo các ô mới ở trên cùng của cột
+        for (int i = 0; i < emptySlots; i++)
+        {
+            int y = levelDesign.col - i - 1;
+
+            // Khởi tạo ô mới phía trên lưới
+            Vector3 spawnPosition = new Vector3(x, levelDesign.col + i, 0);
+            D_Tile newTile = Instantiate(levelDesign.tilePrefab, spawnPosition, Quaternion.identity);
+
+            // Thiết lập thuộc tính ô (ngoại trừ loại)
+            newTile.posX = x;
+            newTile.posY = y;
+            levelDesign.lsTiles.Add(newTile);
+            newTiles.Add(newTile);
+
+            // Tạm thời đặt loại ngẫu nhiên, sẽ được cập nhật sau
+            int rand = Random.Range(0, levelDesign.tileAmount);
+            newTile.type = (D_TipeType)rand;
+            newTile.SpriteRenderer.sprite = levelDesign.lsTileSprite[rand];
+            newTile.name = "Tile" + newTile.type.ToString();
+        }
+
+        // Thiết lập các ô láng giềng cho các ô mới
+        foreach (var tile in newTiles)
+        {
+            tile.SetTileNeighbor();
+        }
+
+        // Thử tạo nước đi tiềm năng với các ô mới
+        if (!TryCreatePotentialMove(newTiles))
+        {
+            // Nếu không thể tạo nước đi tiềm năng, đặt loại ngẫu nhiên
+            foreach (var tile in newTiles)
+            {
+                int rand = Random.Range(0, levelDesign.tileAmount);
+                tile.type = (D_TipeType)rand;
+                tile.SpriteRenderer.sprite = levelDesign.lsTileSprite[rand];
+                tile.name = "Tile" + tile.type.ToString();
+            }
+        }
+
+        // Tạo hoạt ảnh cho các ô mới rơi xuống
+        for (int i = 0; i < newTiles.Count; i++)
+        {
+            D_Tile tile = newTiles[i];
+            Vector3 targetPosition = new Vector3(x, tile.posY, 0);
+            float delay = 0.05f * i; // Độ trễ nhỏ để tạo hiệu ứng xếp tầng
+            tile.transform.DOMove(targetPosition, 0.3f).SetEase(Ease.OutBounce).SetDelay(delay);
+        }
+    }
+
+    // Thử tạo nước đi tiềm năng với các ô mới
+    bool TryCreatePotentialMove(List<D_Tile> newTiles)
+    {
+        // Danh sách các loại có thể
+        List<D_TipeType> possibleTypes = new List<D_TipeType>();
+        for (int i = 0; i < GamePlayController.Instance.levelDesign.tileAmount; i++)
+        {
+            possibleTypes.Add((D_TipeType)i);
+        }
+
+        // Thử tối đa 10 lần để tạo nước đi tiềm năng
+        for (int attempt = 0; attempt < 10; attempt++)
+        {
+            // Thử đặt loại ngẫu nhiên cho các ô mới
+            foreach (var tile in newTiles)
+            {
+                int randIndex = Random.Range(0, possibleTypes.Count);
+                tile.type = possibleTypes[randIndex];
+                tile.SpriteRenderer.sprite = GamePlayController.Instance.levelDesign.lsTileSprite[(int)tile.type];
+                tile.name = "Tile" + tile.type.ToString();
+            }
+
+            // Kiểm tra xem có nước đi tiềm năng không
+            if (HasPotentialMoves())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
     bool CheckForMatches()
     {
         this.hsMatch.Clear();

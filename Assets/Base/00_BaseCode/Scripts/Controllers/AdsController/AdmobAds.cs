@@ -55,7 +55,7 @@ public class AdmobAds : MonoBehaviour
 
             InitInterstitial();
             InitRewardVideo();
-            InitializeBannerAds();
+            //InitializeBannerAds();
             //InitializeMRecAds();
             //InitializeOpenAppAds();
 
