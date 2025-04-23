@@ -118,24 +118,226 @@ public class D_TileController : MonoBehaviour
         hsMatch.UnionWith(horizontal);
         hsMatch.UnionWith(vertical);
 
-
         var tilesByType = hsMatch.GroupBy(t => t.type);
+        List<D_Tile> tilesToRemove = new List<D_Tile>();
+
         foreach (var group in tilesByType)
         {
-            // Nếu có từ 3 tile cùng loại trở lên thì destroy
+            // Nếu có 3 ô trở lên cùng loại, hủy chúng
             if (group.Count() >= 3)
             {
                 foreach (var tile in group)
                 {
-                    tile.ClearNeighborRef();
-                    tile.SetTileNeighbor();
-                    tile.transform.DOScale(0f, 0.5f)
-                        .SetEase(Ease.OutQuad)
-                        .OnComplete(() => Destroy(tile.gameObject));
+                    tilesToRemove.Add(tile);
                 }
             }
         }
 
+        if (tilesToRemove.Count > 0)
+        {
+            StartCoroutine(RemoveTilesAndHandleFalling(tilesToRemove));
+        }
+    }
+
+    IEnumerator RemoveTilesAndHandleFalling(List<D_Tile> tilesToRemove)
+    {
+        // Đầu tiên, xóa tham chiếu láng giềng cho tất cả các ô sẽ bị xóa
+        foreach (var tile in tilesToRemove)
+        {
+            tile.ClearNeighborRef();
+
+            // Xóa khỏi danh sách thiết kế cấp độ
+            GamePlayController.Instance.levelDesign.lsTiles.Remove(tile);
+
+            // Tạo hoạt ảnh hủy ô
+            tile.transform.DOScale(0f, 0.3f)
+                .SetEase(Ease.OutQuad)
+                .OnComplete(() => Destroy(tile.gameObject));
+        }
+
+        // Đợi hoạt ảnh xóa hoàn thành
+        yield return new WaitForSeconds(0.3f);
+
+        // Xử lý các ô rơi xuống
+        HandleTileFalling();
+    }
+
+    void HandleTileFalling()
+    {
+        bool needToCheck = false;
+        Dictionary<int, int> columnsNeedingNewTiles = new Dictionary<int, int>(); // <cột, số ô cần tạo>
+
+        // Bắt đầu từ hàng dưới cùng và kiểm tra từng cột
+        for (int x = 0; x < GamePlayController.Instance.levelDesign.row; x++)
+        {
+            // Đếm số ô trống trong cột này
+            int emptySlots = 0;
+
+            // Kiểm tra từng vị trí trong cột từ dưới lên trên
+            for (int y = 0; y < GamePlayController.Instance.levelDesign.col; y++)
+            {
+                // Lấy ô hiện tại tại vị trí này
+                D_Tile currentTile = GetTile(x, y);
+
+                if (currentTile == null)
+                {
+                    // Nếu không có ô, tăng bộ đếm ô trống
+                    emptySlots++;
+                }
+                else if (emptySlots > 0)
+                {
+                    // Nếu chúng ta có ô trống bên dưới và tìm thấy một ô, di chuyển nó xuống
+
+                    // Tính toán vị trí mới
+                    int newY = y - emptySlots;
+                    Vector3 newPosition = new Vector3(x, newY, 0);
+
+                    // Tạo hoạt ảnh ô rơi
+                    currentTile.transform.DOMove(newPosition, 0.3f).SetEase(Ease.OutBounce);
+
+                    // Cập nhật chỉ số ô
+                    currentTile.UpdateIndex(new Vector2(x, newY));
+
+                    // Chúng ta đã di chuyển một ô, vì vậy cần kiểm tra các ô khớp sau khi tất cả các ô đã rơi
+                    needToCheck = true;
+                }
+            }
+
+            // Ghi lại các cột cần tạo ô mới
+            if (emptySlots > 0)
+            {
+                columnsNeedingNewTiles[x] = emptySlots;
+                needToCheck = true;
+            }
+        }
+
+        // Nếu có ô trống, tạo ô mới sau khi các ô hiện có đã rơi
+        if (columnsNeedingNewTiles.Count > 0)
+        {
+            StartCoroutine(SpawnNewTilesAfterFalling(columnsNeedingNewTiles, needToCheck));
+        }
+        else if (needToCheck)
+        {
+            // Nếu không cần tạo ô mới nhưng có ô đã di chuyển, kiểm tra các ô khớp mới
+            StartCoroutine(CheckMatchesAfterFalling());
+        }
+    }
+
+    IEnumerator SpawnNewTilesAfterFalling(Dictionary<int, int> columnsNeedingNewTiles, bool needToCheck)
+    {
+        // Đợi cho các ô hiện có hoàn thành việc rơi
+        yield return new WaitForSeconds(0.3f);
+
+        // Tạo các ô mới ở trên cùng của mỗi cột cần ô mới
+        foreach (var columnData in columnsNeedingNewTiles)
+        {
+            int x = columnData.Key;
+            int emptySlots = columnData.Value;
+
+            SpawnNewTilesInColumn(x, emptySlots);
+        }
+
+        // Đợi cho các ô mới hoàn thành việc rơi
+        yield return new WaitForSeconds(0.5f);
+
+        // Thiết lập các ô láng giềng cho tất cả các ô
+        foreach (var tile in GamePlayController.Instance.levelDesign.lsTiles)
+        {
+            tile.SetTileNeighbor();
+        }
+
+        // Kiểm tra các ô khớp mới
+        if (needToCheck)
+        {
+            bool hasMatches = CheckForMatches();
+
+            if (hasMatches)
+            {
+                ClearMatch();
+            }
+        }
+    }
+    void SpawnNewTilesInColumn(int x, int emptySlots)
+    {
+        var levelDesign = GamePlayController.Instance.levelDesign;
+
+        // Tạo các ô mới ở trên cùng của cột
+        for (int i = 0; i < emptySlots; i++)
+        {
+            int y = levelDesign.col - i - 1;
+
+            // Tạo loại ô ngẫu nhiên
+            int rand = Random.Range(0, levelDesign.tileAmount);
+
+            // Khởi tạo ô mới phía trên lưới
+            Vector3 spawnPosition = new Vector3(x, levelDesign.col + i, 0);
+            D_Tile newTile = Instantiate(levelDesign.tilePrefab, spawnPosition, Quaternion.identity);
+
+            // Thiết lập thuộc tính ô
+            newTile.posX = x;
+            newTile.posY = y;
+            levelDesign.lsTiles.Add(newTile);
+
+            // Thiết lập loại và sprite của ô
+            newTile.type = (D_TipeType)rand;
+            newTile.SpriteRenderer.sprite = levelDesign.lsTileSprite[rand];
+            newTile.name = "Tile" + newTile.type.ToString();
+
+            // Tạo hoạt ảnh ô rơi từ trên xuống
+            Vector3 targetPosition = new Vector3(x, y, 0);
+            float delay = 0.05f * i; // Độ trễ nhỏ để tạo hiệu ứng xếp tầng
+            newTile.transform.DOMove(targetPosition, 0.3f).SetEase(Ease.OutBounce).SetDelay(delay);
+        }
+    }
+    IEnumerator CheckMatchesAfterFalling()
+    {
+        // Đợi cho các ô hoàn thành việc rơi
+        yield return new WaitForSeconds(0.5f);
+
+        // Thiết lập các ô láng giềng cho tất cả các ô
+        foreach (var tile in GamePlayController.Instance.levelDesign.lsTiles)
+        {
+            tile.SetTileNeighbor();
+        }
+
+        // Kiểm tra các ô khớp mới
+        bool hasMatches = CheckForMatches();
+
+        if (hasMatches)
+        {
+            ClearMatch();
+        }
+        // Sau này chúng ta sẽ thêm xử lý tạo ô mới ở đây
+    }
+
+    bool CheckForMatches()
+    {
+        this.hsMatch.Clear();
+        this.horizontal.Clear();
+        this.vertical.Clear();
+
+        bool foundMatches = false;
+
+        // Kiểm tra ô khớp cho từng ô
+        foreach (var tile in GamePlayController.Instance.levelDesign.lsTiles)
+        {
+            float sumHorizontal = this.CheckHorizontal_Right(tile) + this.CheckHorizontal_Left(tile);
+            float sumVertical = this.CheckVertical_Up(tile) + this.CheckVertical_Down(tile);
+
+            if (sumHorizontal > 1)
+            {
+                this.horizontal.Add(tile);
+                foundMatches = true;
+            }
+
+            if (sumVertical > 1)
+            {
+                this.vertical.Add(tile);
+                foundMatches = true;
+            }
+        }
+
+        return foundMatches;
     }
 
 
