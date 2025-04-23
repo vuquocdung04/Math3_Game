@@ -1,1 +1,7 @@
-# ProjectBase_2022.3320f1# Math3_Game
+## Screenshots
+
+### Gameplay
+![Gameplay Screenshot](gameplay.png)
+
+### Loading Screen
+![Loading Screenshot](loading.png)
